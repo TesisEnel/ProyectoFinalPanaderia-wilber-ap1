@@ -110,10 +110,6 @@ Consulta de Ventas:
 ![image](https://user-images.githubusercontent.com/123315885/230750026-75f5900a-5c40-4efb-a032-c9b773200276.png)
  
 
-# AUTO-EVALUACIÓN:
-
-![image](https://user-images.githubusercontent.com/123315885/230750029-e83a1bc2-076e-41e5-af61-0713b414a6fa.png)
- 
 
 
 
