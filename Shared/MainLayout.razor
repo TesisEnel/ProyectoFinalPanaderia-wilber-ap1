@@ -1,0 +1,44 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Panaderia</PageTitle>
+
+<RadzenDialog/>
+<RadzenNotification/>
+<RadzenContextMenu/>
+<RadzenTooltip/>
+
+<RadzenLayout class="fs-6" style=" display: flex; flex-direction: column; width: 100%; 
+ background-image: url('https://wallpapers.com/images/hd/bakery-flat-lay-photography-n0dtv3j3l7pmtgek.jpg');
+  background-attachment: fixed; background-size: cover; " >
+    <RadzenHeader style="background-color: #AD7E3C; width: 100%; padding: 0;">
+        <RadzenMenu class="fs-5" style="background-color: #AD7E3C;  ">
+            <RadzenMenuItem Path="/" Text="INICIO " />
+            <RadzenMenuItem Text="Productos">
+                <RadzenMenuItem Text="Registro" Path="/R_Productos"></RadzenMenuItem>
+                <RadzenMenuItem Text="Consulta" Path="C_productos"></RadzenMenuItem>
+            </RadzenMenuItem>
+            <RadzenMenuItem Text="Ventas">
+                <RadzenMenuItem Text="Registro" Path="R_Ventas"></RadzenMenuItem>
+                <RadzenMenuItem Text="Consulta" Path="C_Ventas"></RadzenMenuItem>
+            </RadzenMenuItem>
+            <RadzenMenuItem Text="Clientes">
+                <RadzenMenuItem Text="Registro" Path="R_Clientes"></RadzenMenuItem>
+                <RadzenMenuItem Text="Consulta" Path="C_Clientes"></RadzenMenuItem>
+            </RadzenMenuItem>
+            <RadzenMenuItem Text="Recepciones">
+                <RadzenMenuItem Text="Registro" Path="R_Recepciones"></RadzenMenuItem>
+                <RadzenMenuItem Text="Consulta" Path="C_Recepciones"></RadzenMenuItem>
+            </RadzenMenuItem>
+            <div class="ms-auto">
+                <LoginDisplay />
+            </div>
+        </RadzenMenu>
+    </RadzenHeader>
+
+        <RadzenContent class="fs-5"  style=" width: 100%;  flex: 1; overflow-y: auto; margin-top: 10px;">
+           
+                @Body
+         
+        </RadzenContent>
+    
+</RadzenLayout>

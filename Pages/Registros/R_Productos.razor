@@ -1,0 +1,188 @@
+﻿@page "/R_Productos"
+@page "/R_Productos/{ProductoId:int}"
+@inject ProductosBLL productosBLL
+@inject NotificationService notify
+
+<EditForm Model="producto" OnValidSubmit="Guardar">
+     
+    
+        <div class="card font-monospace"  style="max-width: 700px;  left: 50%; transform: translate( -50%);" >
+            @*Encabezado de la Pagina*@
+            <div class="card-header" style="background-color: #D9B382">
+               <div class="row" style="flex-direction: row; align-items: center;">
+                    <div class="col-3">
+                        <div style="width: 100%; display: flex; justify-content: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3014/3014502.png" alt="pan" style=" max-width: 100%; height: auto;">
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <h1 style="text-align: center;"> Registro de Productos</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                @*Id y boton buscar*@
+                
+                 <div class="row">
+                    <div class="col-6">
+                        <label for="txtId" class="form-label"> Id:</label>
+                        <div class="input-group">
+                            <input type="number"  id="txtId" class="form-control" @bind-value="producto.ProductoId" @oninput="InputCambiado">
+                            <button name="btnBuscar" id="btnBuscar" class="btn btn-primary col-2" @onclick="Buscar" type="button"  >
+                            <span class="oi oi-magnifying-glass"></span> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    @*Nombre y Precio*@
+                    <div class="col-6">
+                        <label for="txtNombre" class="form-label"> Nombre:</label>
+                        <input type="text"  id="txtNombre" class="form-control" @bind-value="producto.Nombre" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => producto.Nombre)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtPrecio" class="form-label"> Precio:</label>
+                        <input type="number"  id="txtPrecio" class="form-control" @bind-value="producto.Precio" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => producto.Precio)" />
+                    </div>
+                </div>
+                <div class="row">
+                    @*Costo y Descripcion*@
+                    <div class="col-6">
+                        <label for="txtCosto" class="form-label"> Costo:</label>
+                        <input type="number"  id="txtCosto" class="form-control" @bind-value="producto.Costo" @oninput="InputCambiado" >
+                        <ValidationMessage For="@(() => producto.Costo)" />
+                    </div>
+
+                    <div class="col-6">
+                        <label for="txtDescripcion" class="form-label"> Descripción:</label>
+                        <input type="text"  id="txtDescripcion" class="form-control" @bind-value="producto.Descripcion" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => producto.Descripcion)" />
+                    </div>
+                </div>
+                 <div class="row">
+                    @*Fecha*@
+                    <div class="col-6">
+                        <label for="txtFecha" class="form-label"> Fecha:</label>
+                        <input type="date"  id="txtFecha" class="form-control" @bind-value="producto.Fecha" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => producto.Fecha)" />
+                    </div>
+                </div>
+
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+                
+            </div>
+            <div class="card-footer text-center fs-5" style="background-color: #D9B382">
+                @*Botones*@
+                <button  name="btNuevo" id="btNuevo" class="btn btn-primary mr-2" @onclick="Nuevo" type="button"  >
+                    <span class="oi oi-plus"></span> Nuevo
+                </button >
+                <button name="btnGuardar" id="btnGuardar" class="btn btn-success mr-2" type="submit"  >
+                    <span class=" oi oi-cloud-download"></span> Guardar
+                </button>
+                <button name="btnEliminar" id="btnEliminar" class="btn btn-danger" @onclick="Eliminar"  type="button" disabled="@condicion" >
+                    <span class="oi oi-trash"></span> Eliminar
+                </button>
+            </div>
+        </div>
+   
+
+
+</EditForm>
+  
+
+@code{
+    [Parameter]
+    public int ProductoId{get; set;}
+    public Productos producto { get; set; } = new Productos();
+    public bool condicion { get; set; }= false;
+     protected override void OnInitialized()
+     {
+        if(ProductoId>0){
+            producto.ProductoId = ProductoId;
+            Buscar();
+        }
+        else
+        {
+            producto.Fecha = DateTime.Today;
+        }
+        
+     }
+
+    void Guardar(){
+        if(!Validar()){return;}
+        
+        if(productosBLL.Guardar(producto)){
+            notify.ShowNotification("Guardado correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("No se pudo Guardar", NotificationSeverity.Error);
+        }
+
+    }
+    bool Validar(){
+        bool validacion = true;
+
+        if(String.IsNullOrEmpty(producto.Nombre)){validacion= false;}
+        if(String.IsNullOrEmpty(producto. Descripcion)){ validacion= false;}
+        if(producto.Precio<=0){validacion= false;}
+        if(ProductoId!=producto.ProductoId){
+            notify.ShowNotification($"No esta Permitido Modificar el ID ({ProductoId}), si esta intentando crear un nuevo Registro coloque 0 en el campo ID  " , NotificationSeverity.Error);
+             validacion= false;
+            
+        }
+
+        return validacion;
+    }
+
+    void Nuevo(){
+        producto = new Productos();
+        producto.Fecha = DateTime.Today;
+        ProductoId=0;
+        condicion = false;
+    }
+
+    void Eliminar(){
+        if(productosBLL.Existe(producto.ProductoId)){
+
+         if(productosBLL.Eliminar(producto)){
+            notify.ShowNotification("Eliminado Correctamente", NotificationSeverity.Success);
+            Nuevo();
+            }
+            
+        }
+        else{
+             notify.ShowNotification("Este Producto no Existe", NotificationSeverity.Error);
+        }
+    }
+
+    void Buscar(){
+        var encontrado = productosBLL.Buscar(producto.ProductoId);
+        if(encontrado!=null){
+            producto= encontrado;
+            ProductoId= encontrado.ProductoId;
+            condicion = false;
+            notify.ShowNotification("Producto encontrado Correctamente", NotificationSeverity.Success);
+        }
+        else{
+            notify.ShowNotification("No se pudo encontrar el Producto", NotificationSeverity.Error);
+        }
+    }
+
+    void InputCambiado()
+    {
+        if(condicion==false && producto.ProductoId!=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+        }
+        condicion = true;
+    }
+
+}
+
+
+

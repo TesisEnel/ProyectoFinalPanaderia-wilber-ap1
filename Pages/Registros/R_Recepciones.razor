@@ -1,0 +1,192 @@
+﻿@page "/R_Recepciones"
+@page "/R_Recepciones/{RecepcionId:int}"
+@inject RecepcionesBLL recepcionesBLL
+@inject ProductosBLL productosBLL
+@inject NotificationService notify
+
+
+<EditForm Model="recepcion" OnValidSubmit="Guardar">
+    
+
+        <div class="card font-monospace" style="max-width: 700px;  left: 50%; transform: translate( -50%);"  >
+            @*Encabezado de la Pagina*@
+            <div class="card-header" style="background-color: #D9B382">
+               <div class="row" style="flex-direction: row; align-items: center;" >
+                    <div class="col-3">
+                        <div style="width: 100%; display: flex; justify-content: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/814/814245.png" alt="pan" style=" max-width: 100%; height: auto;">
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <h1 style="text-align: center;"> Registros de Recepciones</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body"   >
+                @*Id y boton buscar*@
+                 
+                 <div class="row">
+                    <div class="col-6">
+                        <label for="txtId" class="form-label"> Id:</label>
+                        <div class="input-group">
+                            <input type="number"  id="txtId" class="form-control" @bind-value="recepcion.RecepcionId" @oninput="InputCambiado">
+                            <button name="btnBuscar" id="btnBuscar" class="btn btn-primary col-2" @onclick="Buscar" type="button"  >
+                            <span class="oi oi-magnifying-glass"></span> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    @*Producto y Concepto*@
+                    <div class="col-6">
+                        <label for="txtProducto" class="form-label"> Producto:</label>
+                        <InputSelect class="form-select" @bind-Value="recepcion.ProductoId" @oninput="InputCambiado">
+                            @if(listaProductos!=null){
+                                @if(recepcion.ProductoId==0 && listaProductos.FirstOrDefault()!=null ){
+                                    recepcion.ProductoId = listaProductos.FirstOrDefault().ProductoId;
+                                }
+                           
+                                @foreach (var producto in listaProductos )
+                                {
+                                 <option value="@producto.ProductoId">@producto.Nombre</option> 
+                                }
+                             }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => recepcion.ProductoId)" @oninput="InputCambiado" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtConcepto" class="form-label"> Concepto:</label>
+                        <input type="text"  id="txtConcepto" class="form-control" @bind-value="recepcion.Concepto" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => recepcion.Concepto)" />
+                    </div>
+                </div>
+                <div class="row">
+                    @*Cantidad y Fecha*@
+                    <div class="col-6">
+                        <label for="txtCantidad" class="form-label"> Cantidad:</label>
+                        <input type="number"  id="txtCantidad" class="form-control" @bind-value="recepcion.Cantidad" @oninput="InputCambiado" >
+                        <ValidationMessage For="@(() => recepcion.Cantidad)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtFecha" class="form-label"> Fecha:</label>
+                        <input type="date"  id="txtFecha" class="form-control" @bind-value="recepcion.Fecha" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => recepcion.Fecha)" />
+                    </div>
+                </div>
+                <DataAnnotationsValidator/>
+                 <ValidationSummary/>
+                
+            </div>
+            <div class="card-footer text-center fs-5" style="background-color: #D9B382">
+                @*Botones*@
+                <button  name="btNuevo" id="btNuevo" class="btn btn-primary mr-2"  @onclick="Nuevo" type="button"  >
+                    <span class="oi oi-plus"></span> Nuevo
+                </button >
+                <button name="btnGuardar" id="btnGuardar" class="btn btn-success mr-2" type="submit" >
+                    <span class=" oi oi-cloud-download"></span> Guardar
+                </button>
+                <button name="btnEliminar" id="btnEliminar" class="btn btn-danger" @onclick="Eliminar" type="button" disabled="@condicion" >
+                    <span class="oi oi-trash"></span> Eliminar
+                </button>
+            </div>
+        </div>
+   
+
+
+</EditForm>
+  
+
+@code{
+    [Parameter]
+    public int RecepcionId { get; set; }
+    List<Productos> listaProductos = new List<Productos>();
+    public Recepciones recepcion { get; set; } = new Recepciones();
+    public bool condicion { get; set; }= false;
+
+     protected override void OnInitialized(){
+        if(RecepcionId>0){
+            recepcion.RecepcionId = RecepcionId;
+            Buscar();
+        }
+        else{
+            recepcion.Fecha = DateTime.Today;
+        }
+        
+        listaProductos = productosBLL.GetList(o=> true);
+     }
+
+    void Guardar(){
+        if(!Validar()){return;}
+        if(recepcionesBLL.Guardar(recepcion)){
+            notify.ShowNotification("Guardado correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("No se pudo Guardar", NotificationSeverity.Error);
+        }
+
+    }
+    bool Validar(){
+        bool validacion = true;
+
+        if(recepcion.ProductoId<=0){validacion= false;}
+        if(String.IsNullOrEmpty(recepcion.Concepto)){ validacion=false;}
+        if(recepcion.Cantidad<=0){validacion= false;}
+        if(RecepcionId!=recepcion.RecepcionId){
+            notify.ShowNotification($"No esta Permitido Modificar el ID ({RecepcionId}), si esta intentando crear un nuevo Registro coloque 0 en el campo ID  " , NotificationSeverity.Error);
+             validacion= false;
+            
+        }
+
+        return validacion;
+    }
+
+    void Nuevo(){
+        recepcion= new Recepciones();
+        recepcion.Fecha=  DateTime.Today;
+        RecepcionId=0;
+        condicion= false;
+    }
+
+    void Eliminar(){
+
+        if(recepcionesBLL.Existe(recepcion.RecepcionId)){
+            recepcionesBLL.Eliminar(recepcion);
+            notify.ShowNotification("Eliminado Correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("Esta Recepcion no Existe", NotificationSeverity.Error);
+        }
+           
+    }
+
+    void Buscar(){
+        var encontrado = recepcionesBLL.Buscar(recepcion.RecepcionId);
+        if(encontrado!=null){
+            recepcion= encontrado;
+            RecepcionId= encontrado.RecepcionId;
+            condicion= false;
+            notify.ShowNotification("Recepcion encontrada Correctamente", NotificationSeverity.Success);
+        }
+        else{
+             notify.ShowNotification("No se pudo encontrar la Recepcion", NotificationSeverity.Error);
+        }
+    }
+
+   void InputCambiado()
+    {
+        if(condicion==false && recepcion.RecepcionId!=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+        }
+        condicion = true;
+    }
+
+
+
+}
+
+
+

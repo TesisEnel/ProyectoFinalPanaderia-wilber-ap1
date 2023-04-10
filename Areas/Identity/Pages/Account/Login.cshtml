@@ -1,0 +1,56 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "";
+}
+<style>
+    body {
+        background-image: url('https://wallpapers.com/images/hd/bakery-flat-lay-photography-n0dtv3j3l7pmtgek.jpg');
+        background-attachment: fixed; 
+        background-size: cover;
+    }
+</style>
+
+<h1>@ViewData["Title"]</h1>
+<div class="row" style="">
+    <div class="col-md-4">
+        <section>
+            <form id="account" method="post">
+                <h2 style="color:white">¡Bienvenido!</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <label asp-for="Input.Email" class="form-label">Correo</label>
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <label asp-for="Input.Password" class="form-label">Contraseña</label>
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                
+                <div>
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary"  Style="background-color: #AD7E3C">Iniciar Sesión</button>
+                </div>
+                <div>
+                   
+                    
+                   
+                </div>
+            </form>
+        </section>
+    </div>
+    <div class="col-md-6 col-md-offset-2" >
+        <section >
+            
+            <img src="https://cdn.pixabay.com/photo/2021/09/29/20/52/baker-6668439_960_720.png" alt="" width="500" height="500" style="margin-left: 150px;">
+            
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

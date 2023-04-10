@@ -1,0 +1,111 @@
+﻿@page "/"
+@inject VentasBLL VentasBLL
+@inject ProductosBLL ProductosBLL
+
+
+
+<RadzenCard Class="rz-my-12 rz-mx-auto font-monospace" Style="width: 500px ; background-color: #D9B382" >
+     <div class="row">
+         <div class="col-2">
+             <RadzenImage Path="https://cdn-icons-png.flaticon.com/512/950/950576.png" style=" width: 40px; height: 40px;"/>
+        </div>
+        <div class="col-9">
+            <RadzenLabel > Ingresos: $ @ingresos</RadzenLabel>
+        </div>
+    </div>
+</RadzenCard>
+<RadzenCard Class="rz-my-12 rz-mx-auto font-monospace" Style="width: 500px; background-color: #D9B382  ">
+     <div class="row">
+         <div class="col-2">
+             <RadzenImage Path="https://cdn-icons-png.flaticon.com/512/781/781831.png" style=" width: 40px; height: 40px;"/>
+        </div>
+        <div class="col-9">
+            <RadzenLabel > Ganacias: $ @ganancias</RadzenLabel>
+        </div>
+    </div>
+</RadzenCard>
+<RadzenCard Class="rz-my-12 rz-mx-auto font-monospace" Style="width: 500px; background-color: #D9B382">
+    <div class="row">
+         <div class="col-2">
+             <RadzenImage Path="https://cdn-icons-png.flaticon.com/512/3638/3638928.png" style=" width: 40px; height: 40px;" />
+        </div>
+            <div class="col-9">
+                <RadzenLabel > Productos en el Almacén:  @productos</RadzenLabel>
+            </div>
+    </div>
+</RadzenCard >
+<RadzenCard Class="rz-my-12 rz-mx-auto font-monospace" Style="width: 500px; background-color: #D9B382">
+    <div class="row">
+       
+         <div class="col-2">
+             <RadzenImage Path="https://cdn-icons-png.flaticon.com/512/994/994305.png" style=" width: 40px; height: 40px;"/>
+        </div>
+            <div class="col-9">
+                <RadzenLabel >Productos Vendidos:  @vendido</RadzenLabel>
+            </div>
+    </div>
+</RadzenCard>
+<RadzenCard Class="rz-my-12 rz-mx-auto font-monospace" Style="width: 500px; background-color: #D9B382">
+    <div class="row">
+       
+         <div class="col-2">
+             <RadzenImage Path="https://cdn-icons-png.flaticon.com/512/6213/6213130.png" style=" width: 50px; height: 50px;"/>
+        </div>
+            <div class="col-9">
+                <RadzenLabel >Producto Mas Vendido:  @productoMasVendido </RadzenLabel>
+            </div>
+    </div>
+</RadzenCard>
+
+
+
+
+
+@code{
+    public double ingresos { get; set; }
+    public double ganancias { get; set; }
+    public int vendido{ get; set; }
+    public int productos { get; set; }
+    public String? productoMasVendido  { get; set; }
+    public List<Ventas> listaVentas { get; set; } = new List<Ventas>();
+    public List<Productos> listaProductos { get; set; } = new List<Productos>();
+
+
+
+    protected override void OnInitialized()
+    {
+        listaVentas= VentasBLL.GetList(o=> true);
+        listaProductos=  ProductosBLL.GetList(o=>true);
+
+        ingresos= listaVentas.Sum(o=> o.Monto);
+        vendido=  listaVentas
+        .SelectMany(v => v.detallesVentas)
+        .Sum(dv => dv.Cantidad);
+
+        double costoTotalVentas = listaVentas
+        .SelectMany(v => v.detallesVentas)
+        .Join(listaProductos, dv => dv.ProductoId, p => p.ProductoId, (dv, p) => new { DetalleVenta = dv, Producto = p })
+        .Sum(dv => dv.DetalleVenta.Cantidad * dv.Producto.Costo);
+
+        ganancias = ingresos- costoTotalVentas;
+
+
+        productos= listaProductos.Sum(o=> o.Cantidad);
+
+        var NumMasVendido = listaVentas
+            .SelectMany(v => v.detallesVentas)
+            .GroupBy(dv => dv.ProductoId)
+            .OrderByDescending(g => g.Sum(dv => dv.Cantidad))
+            .FirstOrDefault()
+            ?.First()
+            ?.ProductoId;
+        var Mvendido= listaProductos.FirstOrDefault(p => p.ProductoId== NumMasVendido);
+        if(Mvendido!=null){
+            productoMasVendido= Mvendido.Nombre;
+        }
+        
+
+
+        
+    }
+}

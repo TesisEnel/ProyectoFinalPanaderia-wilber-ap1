@@ -1,0 +1,189 @@
+﻿@page "/R_Clientes"
+@page "/R_Clientes/{ClienteId:int}"
+@inject ClientesBLL clientesBLL
+@inject NotificationService notify
+
+<EditForm Model="cliente" OnValidSubmit="Guardar">
+    
+    
+        <div class="card font-monospace"   style="max-width: 700px;  left: 50%; transform: translate( -50%);" >
+            @*Encabezado de la Pagina*@
+            <div class="card-header" style="background-color: #D9B382;" >
+               <div class="row" style="flex-direction: row; align-items: center;">
+                    <div class="col-3">
+                        <div style="width: 100%; display: flex; justify-content: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3201/3201521.png" alt="pan" style=" max-width: 100%; height: auto;">
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <h1 style="text-align: center;"> Registros de Clientes</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                
+                @*Id y boton buscar*@
+                <div class="row">
+                    <div class="col-6">
+                        <label for="txtId" class="form-label"> Id:</label>
+                        <div class="input-group">
+                            <input type="number"  id="txtId" class="form-control" @bind-value="cliente.ClienteId" @oninput="InputCambiado">
+                            <button name="btnBuscar" id="btnBuscar" class="btn btn-primary col-2" @onclick="Buscar" type="button"  >
+                            <span class="oi oi-magnifying-glass"></span> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                     @*Nombre y apellido*@
+                    <div class="col-6">
+                        <label for="txtNombre" class="form-label"> Nombre:</label>
+                        <input type="text"  id="txtNombre" class="form-control" @bind-value="cliente.Nombre" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => cliente.Nombre)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtApellido" class="form-label"> Apellido:</label>
+                        <input type="text"  id="txtApellido" class="form-control" @bind-value="cliente.Apellido" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => cliente.Apellido)" />
+                    </div>
+                </div>
+                <div class="row">
+                    @*Telfono y Correo*@
+                    <div class="col-6">
+                        <label for="txtTelefono" class="form-label"> Telefono:</label>
+                        <input type="text" id="txtTelefono" class="form-control" @bind-value="cliente.Telefono" @oninput="InputCambiado" >
+                        <ValidationMessage For="@(() => cliente.Telefono)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtCorreo" class="form-label"> Correo:</label>
+                        <input type="text"  id="txtCorreo" class="form-control" @bind-value="cliente.Correo" @oninput="InputCambiado" >
+                        <ValidationMessage For="@(() => cliente.Correo)" />
+                    </div>
+                </div>
+                 <div class="row">
+                    @*Cedula y Fecha*@
+                    <div class="col-6">
+                        <label for="txtTCedula" class="form-label"> Cedula:</label>
+                        <input type="text"  id="txtCedula" class="form-control" @bind-value="cliente.Cedula" @oninput="InputCambiado" >
+                        <ValidationMessage For="@(() => cliente.Cedula)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtFecha" class="form-label"> Fecha:</label>
+                        <input type="date"  id="txtFecha" class="form-control" @bind-value="cliente.Fecha" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => cliente.Fecha)" />
+                    </div>
+                </div>
+                 <DataAnnotationsValidator/>
+                <ValidationSummary/>
+            </div>
+            <div class="card-footer text-center fs-5" style="background-color: #D9B382;">
+                @*Botones*@
+                <button  name="btNuevo" id="btNuevo" class="btn btn-primary mr-2" @onclick="Nuevo" type="button"  >
+                    <span class="oi oi-plus"></span> Nuevo
+                </button >
+                <button name="btnGuardar" id="btnGuardar" class="btn btn-success mr-2" type="submit"  >
+                    <span class=" oi oi-cloud-download"></span> Guardar
+                </button>
+                <button name="btnEliminar" id="btnEliminar" class="btn btn-danger" @onclick="Eliminar" type="button" disabled="@condicion"  >
+                    <span class="oi oi-trash"></span> Eliminar
+                </button>
+            </div>
+        </div>
+   
+
+
+</EditForm>
+  
+
+@code{
+    [Parameter]
+    public int ClienteId { get; set; }
+    public Clientes cliente { get; set; } = new Clientes();
+    public bool condicion { get; set; }= false;
+
+     protected override void OnInitialized(){
+        if(ClienteId>0){
+            cliente.ClienteId = ClienteId;
+            Buscar();
+        }
+        else{
+            cliente.Fecha = DateTime.Today;
+        }
+     }
+
+    void Guardar(){
+        if(!Validar()){return;}
+
+        if(clientesBLL.Guardar(cliente)){
+            notify.ShowNotification("Guardado correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("No se pudo Guardar", NotificationSeverity.Error);
+        }
+    }
+
+    bool Validar(){
+        bool validacion = true;
+
+        if(String.IsNullOrEmpty(cliente.Nombre)){validacion = false;}
+        if(String.IsNullOrEmpty(cliente.Apellido)){validacion = false;}
+        if(String.IsNullOrEmpty(cliente.Correo)){validacion = false;}
+        if(cliente?.Telefono?.Length!=10){validacion = false;}
+        if(cliente?.Cedula?.Length!=11){validacion = false;}
+        if(ClienteId!= cliente?.ClienteId){
+            notify.ShowNotification($"No esta Permitido Modificar el ID ({ClienteId}), si esta intentando crear un nuevo Registro coloque 0 en el campo ID  " , NotificationSeverity.Error);
+             validacion= false;
+            
+        }
+
+        return validacion;
+    }
+
+    void Nuevo(){
+        cliente = new Clientes();
+        cliente.Fecha = DateTime.Today;
+        ClienteId=0;
+        condicion=false;
+    }
+
+    void Eliminar(){
+
+        if(clientesBLL.Existe(cliente.ClienteId)){
+            clientesBLL.Eliminar(cliente);
+        notify.ShowNotification("Eliminado Correctamente", NotificationSeverity.Success);
+        Nuevo();
+        }
+        else{
+            notify.ShowNotification("Este Cliente no Existe", NotificationSeverity.Error);
+        }
+        
+               
+    }
+
+    void Buscar(){
+        var encontrado = clientesBLL.Buscar(cliente.ClienteId);
+        if(encontrado!=null){
+            cliente= encontrado;
+            ClienteId= encontrado.ClienteId;
+            condicion=false;
+            notify.ShowNotification("Cliente encontrado Correctamente", NotificationSeverity.Success);
+        }
+        else{
+             notify.ShowNotification("No se pudo encontrar el Cliente", NotificationSeverity.Error);
+        }
+    }
+    void InputCambiado()
+    {
+        if(condicion==false && cliente.ClienteId !=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+        }
+        condicion = true;
+    }
+
+}
+
+
+

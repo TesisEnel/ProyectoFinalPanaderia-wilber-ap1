@@ -1,0 +1,328 @@
+﻿@page "/R_Ventas"
+@page "/R_Ventas/{VentaId:int}"
+@inject ProductosBLL productosBLL
+@inject ClientesBLL clientesBLL
+@inject VentasBLL ventasBLL
+@inject NotificationService notify
+@inject IJSRuntime JSRuntime
+
+
+<EditForm Model="venta" OnValidSubmit="Guardar">
+     
+    
+
+
+        <div class="card font-monospace"  style="max-width: 700px;  left: 50%; transform: translate( -50%);" >
+            @*Encabezado de la Pagina*@
+            <div class="card-header" style="background-color: #D9B382">
+               <div class="row" style="flex-direction: row; align-items: center;">
+                    <div class="col-3">
+                        <div style="width: 100%; display: flex; justify-content: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1019/1019607.png" alt="pan" style=" max-width: 100%; height: auto;">
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <h1 style="text-align: center;"> Registros de Ventas</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                @*Id y boton buscar*@
+                 <div class="row">
+                    <div class="col-6">
+                        <label for="txtId" class="form-label"> Id:</label>
+                        <div class="input-group">
+                            <input type="number"  id="txtId" class="form-control" @bind-value="venta.VentaId">
+                            <button name="btnBuscar" id="btnBuscar" class="btn btn-primary col-2" @onclick="Buscar" type="button"  >
+                            <span class="oi oi-magnifying-glass"></span> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    @*Cliente y Concepto*@
+                    <div class="col-6">
+                        <label for="txtCliente" class="form-label"> Cliente:</label>
+                        <InputSelect class="form-select" @bind-Value="venta.ClienteId" @oninput="InputCambiado">
+                             @foreach (var cliente in listaClientes )
+                             {
+                                 <option value="@cliente.ClienteId">@cliente.Nombre @cliente.Apellido</option> 
+                             }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => venta.ClienteId)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtConcepto" class="form-label"> Concepto:</label>
+                        <input type="text"  id="txtEjemplo" class="form-control" @bind-value="venta.Concepto" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => venta.Concepto)" />
+                    </div>
+                </div>
+                <div class="row">
+                    @*Tipo venta y Fecha*@
+                    <div class="col-6">
+                        <label for="txtTipoVenta" class="form-label"> Tipo Venta:</label>
+                        <InputSelect class="form-select" @bind-Value="venta.TipoVenta" @oninput="InputCambiado">
+                            @if(String.IsNullOrEmpty(venta.TipoVenta)){
+                                venta.TipoVenta= tiposVenta?.FirstOrDefault();
+                            }
+                            @if(tiposVenta!=null){
+                                 @foreach (var tipo in tiposVenta )
+                                {
+                                 <option value="@tipo"> @tipo </option> 
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => venta.TipoVenta)" />
+                    </div>
+                    <div class="col-6">
+                        <label for="txtFecha" class="form-label"> Fecha:</label>
+                        <input type="date"  id="txtFecha" class="form-control" @bind-value="venta.Fecha" @oninput="InputCambiado">
+                        <ValidationMessage For="@(() => venta.Fecha)" />
+                    </div>
+                </div>
+                <h5>Agregar Productos</h5>
+                <div class="row">
+                    @*Agregar Detalle*@
+                    <div class="col-4">
+                        <label for="txtProducto" class="form-label"> Producto:</label>
+                        <InputSelect class="form-select" @bind-Value="detalleVenta.ProductoId">
+                             @foreach (var producto in listaProductos )
+                             {
+                                 <option value="@producto.ProductoId">@producto.Nombre (@producto.Cantidad)</option> 
+                             }
+                        </InputSelect>
+                    </div>
+                    <div class="col-3">
+                        <label for="txtCantidad" class="form-label"> Cantidad:</label>
+                        <input type="number"  id="txtCantidad" class="form-control" @bind-value="detalleVenta.Cantidad">
+                    </div>
+                     <div class="col-5 d-flex align-items-end">
+                        <button name="btnAgregar" id="btnAgregar" class="btn btn-primary col-2" @onclick="Agregar" type="button">
+                            <span class="oi oi-plus"></span> 
+                        </button>
+                    </div>
+                   
+                    @*Tabla detalle*@
+                    <table class="table">
+                        <thead>
+                             <tr>
+                                   <th>Producto</th>
+                                   <th>Cantidad</th>
+                                   <th>Total</th>
+                                   
+                                   <th></th>
+                             </tr>
+                        </thead>
+                         <tbody>
+                              @foreach (var detalleVenta in venta.detallesVentas)
+                             { 
+                                 <tr>
+                                      <td>@productosBLL.Buscar(detalleVenta.ProductoId)?.Nombre</td> 
+                                      <td>@detalleVenta.Cantidad</td>
+                                      <td>$@detalleVenta.PrecioTotal</td>
+                                     
+                                      <td> <button name="Btn" id="Btn" class="btn btn-danger mr-2" type="button"
+                                                @onclick=@(() =>  EliminarDetalle(detalleVenta))> 
+                                                <span class="oi oi-trash"></span>
+                                        </button>
+                                    </td>
+                                 </tr>
+                             }
+                         </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    @*Monto*@
+                        <div class="col-6">
+                            <label class="form-label" > Total = $@venta.Monto</label>
+                        </div>
+                        
+                </div> 
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+            </div>
+            
+            
+            <div class="card-footer text-center fs-5" style="background-color: #D9B382">
+                @*Botones*@
+                <button  name="btNuevo" id="btNuevo" class="btn btn-primary mr-2" @onclick="Nuevo" type="button" >
+                    <span class="oi oi-plus"></span> Nuevo
+                </button >
+                <button name="btnGuardar" id="btnGuardar" class="btn btn-success mr-2" type="submit" >
+                    <span class=" oi oi-cloud-download"></span> Guardar
+                </button>
+                <button name="btnEliminar" id="btnEliminar" class="btn btn-danger" @onclick="Eliminar" type="button"  disabled="@condicion" >
+                    <span class="oi oi-trash" ></span> Eliminar
+                </button>
+            </div>
+        </div>
+   
+
+
+</EditForm>
+  
+
+@code{
+    [Parameter]
+    public int VentaId { get; set; }
+    List<Productos> listaProductos = new List<Productos>();
+    List<Clientes> listaClientes = new List<Clientes>();
+    List<String> tiposVenta = new List<String>{ "Contado", "Credito"} ;  
+    public Ventas venta { get; set; } = new Ventas();
+    public DetallesVenta detalleVenta { get; set; } = new DetallesVenta();
+    public bool condicion { get; set; }= false;
+
+     protected override void OnInitialized()
+     {
+        if(VentaId>0){
+            venta.VentaId= VentaId;
+            Buscar();
+        }
+        else{
+            venta.Fecha = DateTime.Today;
+        }
+        listaProductos= productosBLL.GetList(o=>true);
+        listaClientes = clientesBLL.GetList(o=>true);
+     }
+
+    void Guardar(){
+        if(!Validar()){return;}
+        if(venta.TipoVenta=="Credito"){
+            venta.Balance= venta.Monto;
+        }
+        else{
+            venta.Balance= 0;
+        }
+       
+
+        if(ventasBLL.Guardar(venta)){
+            notify.ShowNotification("Guardado correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("No se pudo Guardar", NotificationSeverity.Error);
+        }
+
+    }
+
+    bool Validar(){
+        bool validacion = true;
+    
+             
+
+        if(venta.ClienteId<=0){validacion=false;}
+        if(String.IsNullOrEmpty(venta.Concepto)){validacion= false;}
+        if(String.IsNullOrEmpty(venta.TipoVenta)){validacion= false;}
+        if(venta.Monto<=0){
+            venta.VentaId= VentaId;
+            notify.ShowNotification("Debe Seleccionar por lo menos un Producto", NotificationSeverity.Warning);
+             validacion= false;
+             
+        }
+        if(VentaId!=venta.VentaId){
+            notify.ShowNotification($"No esta Permitido Modificar el ID ({VentaId}), si esta intentando crear un nuevo Registro coloque 0 en el campo ID  " , NotificationSeverity.Error);
+             validacion= false;
+            
+        }
+       
+      
+
+        return validacion;
+    }
+
+    void Nuevo(){
+        venta = new Ventas();
+        venta.Fecha = DateTime.Today;
+        VentaId=0;
+        listaProductos= productosBLL.GetList(o=>true);
+        condicion= false;
+    }
+
+    void Eliminar(){
+        if(ventasBLL.Existe(venta.VentaId)){
+            ventasBLL.Eliminar(venta);
+            notify.ShowNotification("Eliminado Correctamente", NotificationSeverity.Success);
+            Nuevo();
+        }
+        else{
+            notify.ShowNotification("Esta Venta no Existe", NotificationSeverity.Error);
+        }   
+    }
+
+    void Buscar(){
+        var encontrado = ventasBLL.Buscar(venta.VentaId);
+        if(encontrado!=null){
+            venta= encontrado;
+            VentaId= venta.VentaId;
+            notify.ShowNotification("Venta encontrada Correctamente", NotificationSeverity.Success);
+        }
+        else{
+             notify.ShowNotification("No se pudo encontrar la Venta", NotificationSeverity.Error);
+        }
+    }
+
+    void Agregar(){
+        if(detalleVenta.ProductoId==0){
+            notify.ShowNotification("debe seleccionar un Producto", NotificationSeverity.Warning);
+            return;
+        }
+        if(detalleVenta.Cantidad<=0){
+            notify.ShowNotification("la Cantidad debe ser mayor a 0", NotificationSeverity.Warning);
+            return;
+        }
+         if(listaProductos?.FirstOrDefault(o=> o.ProductoId== detalleVenta.ProductoId)?.Cantidad< detalleVenta.Cantidad){
+            notify.ShowNotification("cantidad no disponible", NotificationSeverity.Warning);
+            return;
+        }
+
+
+        var producto= productosBLL.Buscar(detalleVenta.ProductoId);
+        double costo=0;
+        if(producto!=null){
+            detalleVenta.PrecioTotal= detalleVenta.Cantidad * producto.Precio;
+            costo= detalleVenta.Cantidad* producto.Costo;
+        }
+       
+        detalleVenta.GanaciasTotal= detalleVenta.PrecioTotal-costo;
+        venta.detallesVentas.Add(detalleVenta);
+        venta.Monto+= detalleVenta.PrecioTotal;
+        venta.Ganacias+= detalleVenta.GanaciasTotal;
+        listaProductos.FirstOrDefault(o=> o.ProductoId== detalleVenta.ProductoId ).Cantidad-=detalleVenta.Cantidad;
+        detalleVenta= new DetallesVenta();
+        if(condicion==false && venta.VentaId!=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+        }
+        condicion = true;
+
+    }
+    void EliminarDetalle(DetallesVenta detalle){
+        
+            venta.detallesVentas.Remove(detalle);
+            var producto = productosBLL.Buscar(detalle.ProductoId);
+            var monto= venta.detallesVentas.Sum(o=> o.PrecioTotal);
+            var ganacias= venta.detallesVentas.Sum(o=> o.GanaciasTotal);
+            venta.Monto= monto;
+            venta.Ganacias= ganacias;
+            listaProductos.FirstOrDefault(o=> o.ProductoId== detalle.ProductoId).Cantidad+=detalle.Cantidad;
+
+            if(condicion==false && venta.VentaId!=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+            }
+            condicion = true;
+    }
+
+     void InputCambiado()
+    {
+        if(condicion==false && venta.VentaId!=0){
+            notify.ShowNotification("se ha desativado el boton elminar, para eliminar un registro debe guardar los cambios realizados", NotificationSeverity.Warning);
+        }
+        condicion = true;
+    }
+
+
+   
+}
+
+
+
